@@ -1,0 +1,27 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:batch="http://www.springframework.org/schema/batch"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/batch
+            http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
+            http://www.springframework.org/schema/beans 
+            http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+
+	<!-- In-Memory Repository -->
+    <bean id="jobRepository"
+        class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+        <property name="transactionManager" ref="transactionManager" />
+    </bean>
+
+    <bean id="transactionManager"
+        class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+
+    <bean id="jobLauncher"
+        class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+        <property name="jobRepository" ref="jobRepository" />
+        
+        <!-- Enable AsyncTaskExecutor -->
+        <property name="taskExecutor">
+        	<bean class="org.springframework.core.task.SimpleAsyncTaskExecutor" />
+    	</property>
+    </bean>
+</beans>
