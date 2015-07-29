@@ -1,1 +1,6 @@
+# Spring Batch jobs will not run when Spring Boot starts
 spring.batch.job.enabled: false
+
+# specify the port number, default is 8080
+server:
+     port: 80
