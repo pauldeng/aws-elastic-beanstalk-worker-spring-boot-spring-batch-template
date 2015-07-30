@@ -7,10 +7,10 @@
     <name>aws-elastic-beanstalk-worker-spring-boot-spring-batch-template</name>
     
     <!-- Uncomment this line below to generate deployable WAR file -->
-	<!-- <packaging>war</packaging> -->
+	 <packaging>war</packaging> 
 
 	<!-- Uncomment this line below to generate executable JAR file -->
-	<packaging>jar</packaging>
+	<!-- <packaging>jar</packaging> -->
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -39,15 +39,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>LATEST</version>
+        </dependency>
+        
         
 		<!-- Uncomment this section below to generate deployable WAR file -->
-		<!--
+		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		-->
+		
 		
     </dependencies>
     

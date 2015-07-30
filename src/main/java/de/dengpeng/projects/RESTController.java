@@ -1,12 +1,11 @@
 package de.dengpeng.projects;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
@@ -22,16 +21,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.event.S3EventNotification;
 import com.amazonaws.services.s3.event.S3EventNotification.S3EventNotificationRecord;
 import com.amazonaws.services.s3.model.GetObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
 
 @RestController
 public class RESTController {
@@ -72,15 +71,9 @@ public class RESTController {
         return "Greetings from aws-elastic-beanstalk-worker-spring-boot-spring-batch-template!";
     }
     
-    @RequestMapping(value="/sqs", method=RequestMethod.GET)
-    @ResponseBody
-    public String sqsMessageHandler_get(@RequestParam("json") String jsonMessage) {
-        return "GET Message received " + jsonMessage;
-    }
-    
     @RequestMapping(value="/sqs", method=RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<?> sqsMessageHandler(
+    public ResponseEntity<Void> sqsMessageHandler(
     		@RequestHeader(value="User-Agent",required=false) String sqsdMessageUserAgent, 
     		@RequestHeader(value="X-Aws-Sqsd-Msgid",required=false) String sqsdMessageId, 
     		@RequestHeader(value="X-Aws-Sqsd-Queue",required=false) String sqsdMessageQueueName, 
@@ -95,33 +88,67 @@ public class RESTController {
     	
         try{
         	
-        	if(!sqsdMessageBody.isEmpty()){
+        	File localFile = retrieveS3File(sqsdMessageBody);
+        	
+        	if(localFile != null){
+        		System.out.println("File downloaded: " + localFile.getAbsolutePath());
         		
-        		List<S3EventNotificationRecord> records = S3EventNotification.parseJson(sqsdMessageBody).getRecords();
-        		        		
-        		S3EventNotificationRecord firstRecord = records.get(0);
+        		// verify it
         		
-        		String bucketName = firstRecord.getS3().getBucket().getName();
         		
-        		String s3Region = firstRecord.getAwsRegion();
+        		// extract it
         		
-        		// Object key may have spaces or unicode non-ASCII characters.
-                String objectName = firstRecord.getS3().getObject().getKey().replace('+', ' ');
-                objectName = URLDecoder.decode(objectName, "UTF-8");
-                
-                System.out.println("Downloading an object from: " + s3Region + "/" + bucketName + "/" + objectName);
-                
-                
-                // add your business logic here
-                
-
+        		
+        		// process it
+        		
+        		
+        		// do you own things
+        		
         	}
-            return new ResponseEntity<>(HttpStatus.OK);
+        	
+            return new ResponseEntity<Void>(HttpStatus.OK);
         }catch(Exception ex){
             String errorMessage;
             errorMessage = ex + " <== error";
-            return new ResponseEntity<>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    		System.out.println("XXXXXXXXX");
+    		System.out.println(errorMessage);
+    		System.out.println("XXXXXXXXX");
+            
+            return new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+	private File retrieveS3File(String sqsdMessageBody) throws UnsupportedEncodingException {
+		File localFile = null;
+		
+    	if(!sqsdMessageBody.isEmpty()){
+    		
+    		AmazonS3 s3 = new AmazonS3Client();
+    		
+    		List<S3EventNotificationRecord> records = S3EventNotification.parseJson(sqsdMessageBody).getRecords();
+    		        		
+    		S3EventNotificationRecord firstRecord = records.get(0);
+    		
+    		String bucketName = firstRecord.getS3().getBucket().getName();
+    		
+    		String objectRegion = firstRecord.getAwsRegion();
+    		Region s3Region = Region.getRegion(Regions.fromName(objectRegion));
+    		s3.setRegion(s3Region);
+    		
+    		// Object key may have spaces or unicode non-ASCII characters.
+            String keyName = firstRecord.getS3().getObject().getKey().replace('+', ' ');
+            keyName = URLDecoder.decode(keyName, "UTF-8");                
+            
+            localFile = new File(keyName);
+            
+            System.out.println("Downloading file: " + objectRegion + "/" + bucketName + "/" + keyName);
+            s3.getObject(new GetObjectRequest(bucketName, keyName), localFile);
+            
+            if(!localFile.canRead()){
+            	localFile = null;
+            }
+    	}
+		return localFile;
+	}
     
 }
