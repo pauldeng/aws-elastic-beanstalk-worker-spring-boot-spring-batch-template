@@ -111,16 +111,21 @@ public class RESTController {
         		System.out.println("File downloaded: " + localFile.getAbsolutePath());
         		
         		// verify it
+        		File verifiedFile = verify(localFile);
         		
-        		
-        		// extract it
-        		
-        		
-        		// process it
-        		
-        		
-        		// do you own things
-        		
+        		if(verifiedFile != null){
+            		// extract it
+            		File extractedFile = extract(verifiedFile);
+            		
+            		if(extractedFile != null){
+                		// process it by launch Spring Batch job. It is a async job and will return immediately.
+                    	JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
+                    	jobParametersBuilder.addString("INPUT_FILE_PATH", extractedFile.getAbsolutePath());
+                    	jobParametersBuilder.addLong("TIMESTAMP",new Date().getTime());
+                    	
+                		jobLauncher.run(job3, jobParametersBuilder.toJobParameters());
+            		}
+        		}
         	}
         	
             return new ResponseEntity<Void>(HttpStatus.OK);
@@ -134,6 +139,16 @@ public class RESTController {
             return new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+	private File extract(File verifiedFile) {
+		// TODO Auto-generated method stub
+		return verifiedFile;
+	}
+
+	private File verify(File localFile) {
+		// TODO Auto-generated method stub
+		return localFile;
+	}    
 
 	private File retrieveS3File(String sqsdMessageBody) throws UnsupportedEncodingException {
 		File localFile = null;
