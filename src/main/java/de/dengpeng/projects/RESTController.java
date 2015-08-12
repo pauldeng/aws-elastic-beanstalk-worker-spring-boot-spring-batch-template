@@ -3,12 +3,14 @@ package de.dengpeng.projects;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.JobParametersInvalidException;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
@@ -17,6 +19,7 @@ import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,6 +47,9 @@ public class RESTController {
     @Autowired
     Job job2;
     
+    @Autowired
+    Job job3;
+    
     @RequestMapping("/job1")
     @ResponseBody
     String requestJob1() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException{
@@ -56,6 +62,17 @@ public class RESTController {
     String requestJob2() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException{
         jobLauncher.run(job2, createInitialJobParameterMap());
         return "Job2!";
+    }
+    
+    @RequestMapping("/job3/{input_file_name}")
+    @ResponseBody
+    String requestJob3(@PathVariable("input_file_name") String inputFileName) throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException{
+    	JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
+    	jobParametersBuilder.addString("INPUT_FILE_PATH", inputFileName);
+    	jobParametersBuilder.addLong("TIMESTAMP",new Date().getTime());
+    	
+    	jobLauncher.run(job3, jobParametersBuilder.toJobParameters());
+        return "Job3!";
     }
     
     private JobParameters createInitialJobParameterMap() {

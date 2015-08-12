@@ -48,6 +48,21 @@ public class SampleBatchApplication {
                     return RepeatStatus.FINISHED;}).build())
                 .build();
     }
+    
+    @Bean(name="job3")
+    public Job job3() {
+        return jobs
+                .get("myJob")
+                .incrementer(new RunIdIncrementer())
+                .start(step1())
+                .next(step2(" job3 sample"))
+                .next(steps.get("step3").tasklet((stepContribution, chunkContext) -> {
+                	System.out.println(chunkContext.getStepContext().getJobParameters().get("INPUT_FILE_PATH"));
+                	System.out.println(chunkContext.getStepContext().getJobParameters().get("TIMESTAMP"));
+                    System.out.println("step 3");
+                    return RepeatStatus.FINISHED;}).build())
+                .build();
+    }
 
     public Step step1() {
         return steps.get("step1").tasklet((stepContribution, chunkContext) -> {
